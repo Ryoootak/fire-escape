@@ -4,44 +4,44 @@ import { colors } from '../lib/tokens';
 import { pad2, secondsToComponents } from '../lib/formatTime';
 import type { EscapeStatus } from '../lib/calcEscape';
 
+export type TimerMode = 'idle' | 'countup' | 'countdown';
+
 interface Props {
-  // null = 未起動（--:--表示）、数値 = カウントダウン中の残り秒数
-  totalSeconds: number | null;
+  mode: TimerMode;
+  countupValue: number;        // mode='countup' 時に表示する秒数（App.tsx 主導）
+  totalSeconds: number | null; // mode='countdown' 時のカウントダウン開始秒数
   status: EscapeStatus | null;
 }
 
-export function EscapeTimer({ totalSeconds, status }: Props) {
+export function EscapeTimer({ mode, countupValue, totalSeconds, status }: Props) {
   const [remaining, setRemaining] = useState(totalSeconds ?? 0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // countdown モード時のみインターバルを管理
   useEffect(() => {
-    if (totalSeconds === null) return;
-    setRemaining(totalSeconds);
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    if (mode !== 'countdown' || totalSeconds === null) return;
 
+    setRemaining(totalSeconds);
     intervalRef.current = setInterval(() => {
-      setRemaining((prev) => {
-        if (prev <= 1) {
-          if (intervalRef.current) clearInterval(intervalRef.current);
-          return 0;
-        }
-        return prev - 1;
-      });
+      setRemaining((prev) => (prev > 1 ? prev - 1 : 0));
     }, 1000);
 
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [totalSeconds]);
+  }, [mode, totalSeconds]);
 
-  if (totalSeconds === null || status === null) {
-    return <MutedTimer />;
-  }
+  // idle: muted プレースホルダー
+  if (mode === 'idle') return <MutedTimer />;
 
+  // INFINITE 系は常に専用表示（カウントアップ中でも即表示）
   if (status === 'TRUE_INFINITE' || status === 'PRACTICAL_INFINITE') {
     return <InfiniteTimer status={status} />;
   }
 
-  const t = secondsToComponents(remaining);
+  const displaySeconds = mode === 'countup' ? countupValue : remaining;
+  const t = secondsToComponents(displaySeconds);
   const timerColor = colors.fire;
 
   return (

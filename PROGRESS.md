@@ -100,9 +100,57 @@
 
 ---
 
-## 次：Day 4-5 — 起動演出・煽り・シェア画像（未着手）
+---
 
-- ESCAPEボタン（「ドクン」Heavy haptic → タイマー発光 → 爆速カウントアップ → 着地）
-- 希望枠の煽りテキスト（§4.4）・INFINITE転換の発光演出
-- `react-native-view-shot` + `expo-sharing` でシェア画像生成
-- Day 4 の指示を受けてから着手すること
+## Day 4-5 — 起動演出・煽り・シェア画像（2026-05-25）完了 ✅
+
+### やったこと
+
+| ファイル | 内容 |
+|---|---|
+| `src/lib/tier.ts` | `getTier()` — months/status から称号を逆引き |
+| `src/lib/hint.ts` | `calcShortage()` / `easeOutCubic()` |
+| `src/components/TierTag.tsx` | 称号タグ（§4.3） |
+| `src/components/EscapeButton.tsx` | 起動ボタン（idle 時に中央表示） |
+| `src/components/HintText.tsx` | 「あと月◯万円稼げれば、一生自由。」（§4.4、5万円以内閾値） |
+| `src/components/ShareCard.tsx` | シェア画像カード（forwardRef で captureRef 対象） |
+| `src/components/EscapeTimer.tsx` | mode prop 追加（idle / countup / countdown） |
+| `App.tsx` | フェーズ管理・演出シーケンス・全体オーケストレーション |
+| `package.json` | `react-native-view-shot` / `expo-sharing` 追加 |
+
+### 演出シーケンス実装（§3.2 / §7 準拠）
+
+| タイミング | 内容 | 実装方法 |
+|---|---|---|
+| 0ms | Heavy haptic「ドクン」 | `Haptics.impactAsync(Heavy)` |
+| 0–300ms | タイマーフェードイン | `Animated.timing` opacity 0→1 |
+| 300–1500ms | 爆速カウントアップ | 16ms interval + `easeOutCubic` |
+| 1500ms | Light haptic 着地 | `Haptics.impactAsync(Light)` |
+| 1700ms | カウントダウン開始 | phase → 'running' |
+
+### 設計判断・メモ
+
+- **フェーズ状態機械**：`idle → launching → running` の3段階。launching 中はカウントアップ値を App.tsx が 16ms インターバルで駆動し、EscapeTimer は表示のみ担当。
+- **INFINITE 演出の簡略化**：TRUE_INFINITE / PRACTICAL_INFINITE の場合はカウントアップなし。フェードイン後に即 Success haptic + 緑グロー → running へ。
+- **INFINITE転換グロー**：`result.status` の変化を `useEffect` で監視。DEPLETE→TRUE_INFINITE で `glowAnim` を 0→1 にアニメーション（250ms）、逆方向も対称に実装。
+- **アニメーション**：Reanimated ではなく RN 組み込みの `Animated` API を使用。起動演出は一発もの＋1秒インターバルなので過剰な UI スレッド処理は不要と判断。Reanimated はスライダー連動の 60fps チューニングが必要な場面（Day 3 以降の実機調整）で再検討。
+- **シェア機能**：`react-native-view-shot` + `expo-sharing` で実装済み。ShareCard は画面外（left: -9999）でレンダリングして captureRef。**Expo Go では view-shot が動作しない場合があり、EAS Build（カスタム開発ビルド）が必要**。try/catch で Expo Go でもクラッシュしないように対応済み。
+
+- `tsc --noEmit` エラーなし、`npm test` 10/10 通過
+- コミット：`起動演出・称号・煽りテキスト・シェア機能実装（Day 4-5完了）`
+
+---
+
+## 現状のアプリ全体像（全 Day 完了）
+
+- **Day 1**：calcEscape 純粋関数・テスト
+- **Day 2**：JetBrains Mono タイマー UI
+- **Day 3**：4スライダー × ハプティック連動（Tick スロットリング）
+- **Day 4-5**：ESCAPE 起動演出・称号タグ・希望枠煽り・シェア画像
+
+## 残課題（実機チューニング・リリース前）
+
+- Tick ハプティックの実機体感チューニング（§4.1.1）
+- EAS Build でシェア機能の動作確認
+- グロー・ノイズ・テクスチャのビジュアル仕上げ
+- App Store / Google Play へのリリース準備
