@@ -74,10 +74,35 @@
 
 ---
 
-## 次：Day 3 — スライダー × ハプティック連動（未着手）
+---
 
-- 4つのスライダー（資産・生活費・副収入・利回り）を追加
-- スライダー操作でタイマーをリアルタイム伸縮
-- `expo-haptics` で Tick ハプティック（§4.1.1 スロットリング）
-- ダークモード仕上げ
-- Day 3 の指示を受けてから着手すること
+## Day 3 — スライダー × ハプティック連動（2026-05-25）完了 ✅
+
+### やったこと
+
+| ファイル | 内容 |
+|---|---|
+| `src/components/SliderRow.tsx` | 単体スライダー。§4.1.1 のハプティックスロットリング実装 |
+| `src/components/InputPanel.tsx` | 4スライダーをまとめたパネル。範囲・ステップ・表示フォーマットを集約 |
+| `App.tsx` | `useMemo` で calcEscape をスライダー値に同期。SafeAreaView + ダーク背景 |
+| `package.json` | `@react-native-community/slider` / `expo-haptics` 追加 |
+
+### 設計判断・メモ
+
+- **ハプティックスロットリング**：`onValueChange` を `prevValueRef` と比較し、値が変わった時のみ `selectionAsync()` を発火。step を slider 側に設定しているのでステップ境界以外では実質発火しないが、OS が同値で連続発火するケースも `!== チェック` でカバー。
+- **annualRate スライダー**：step=0.001（0.1%刻み）。表示は `Math.round(rate * 1000) / 10` で浮動小数点誤差を吸収してから `toFixed(1)+'%'`。
+- **`useState<number>(defaults.xxx)`** で型引数を明示：`defaults as const` によるリテラル型推論が `Dispatch<SetStateAction<8000000>>` になる問題を回避。
+- **`useMemo` でリアルタイム計算**：スライダー値が変わるたびに `calcEscape` を再計算。`totalSeconds` も memoize し、EscapeTimer の `useEffect` がリセット・再スタートをかける。
+- ダークモード基本レイアウト（`colors.bg` 背景 / `colors.panel` パネル）を実装。glow・ノイズ・テクスチャは Day 4 の仕上げスコープ。
+
+- `tsc --noEmit` エラーなし、`npm test` 10/10 通過
+- コミット：`スライダー×ハプティック連動・ダークUI実装（Day 3完了）`
+
+---
+
+## 次：Day 4-5 — 起動演出・煽り・シェア画像（未着手）
+
+- ESCAPEボタン（「ドクン」Heavy haptic → タイマー発光 → 爆速カウントアップ → 着地）
+- 希望枠の煽りテキスト（§4.4）・INFINITE転換の発光演出
+- `react-native-view-shot` + `expo-sharing` でシェア画像生成
+- Day 4 の指示を受けてから着手すること
