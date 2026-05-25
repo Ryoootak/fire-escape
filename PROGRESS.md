@@ -49,9 +49,35 @@
 
 ---
 
-## 次：Day 2 — 爆速タイマーUI（未着手）
+---
 
-- 1秒ごとにカウントダウンするタイマーコンポーネント
-- JetBrains Mono 等幅フォント固定（桁ガタつきゼロ）
-- `react-native-reanimated` で 60fps
-- UI着手前に Day 2 の指示を受けること
+## Day 2 — 爆速タイマーUI（2026-05-25）完了 ✅
+
+### やったこと
+
+| ファイル | 内容 |
+|---|---|
+| `src/lib/formatTime.ts` | `monthsToSeconds` / `secondsToComponents` / `pad2`。月→秒換算は 30日/月 固定 |
+| `src/components/EscapeTimer.tsx` | 1秒カウントダウンコンポーネント。DEPLETE / INFINITE / 未起動（--）の3状態を表示 |
+| `App.tsx` | フォントロード（expo-splash-screen）＋ デフォルト値でタイマーをマウント |
+| `package.json` | `@expo-google-fonts/jetbrains-mono` / `expo-font` / `expo-splash-screen` を追加 |
+
+### 設計判断・メモ
+
+- **月→秒換算**：30日/月（= 2,592,000秒）固定。秒→表示の分解も 30日/月・365日/年 で統一し、往復で一貫させた。仕様書に定義なし、シミュレーターとして十分な精度の判断。
+- **等幅保証**：JetBrains Mono（真のモノスペースフォント）を使うことで、ゼロパディングした数字が横幅一定となり桁ガタつきゼロを達成。
+- **カウントダウン実装**：`setInterval` 1秒 ＋ `useRef` でクリーンアップ管理。`totalSeconds` prop が変わるたびにリセットする設計（Day 3 のスライダー連動の前提）。
+- **3状態対応**：DEPLETE → 秒カウントダウン（`--fire`）、TRUE/PRACTICAL_INFINITE → 静的ラベル（`--escape`）、null → グレーアウト `--:--:--`。
+
+- `tsc --noEmit` エラーなし、`npm test` 10/10 通過
+- コミット：`爆速タイマーUIコンポーネント実装（Day 2完了）`
+
+---
+
+## 次：Day 3 — スライダー × ハプティック連動（未着手）
+
+- 4つのスライダー（資産・生活費・副収入・利回り）を追加
+- スライダー操作でタイマーをリアルタイム伸縮
+- `expo-haptics` で Tick ハプティック（§4.1.1 スロットリング）
+- ダークモード仕上げ
+- Day 3 の指示を受けてから着手すること
