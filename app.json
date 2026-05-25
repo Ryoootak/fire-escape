@@ -21,6 +21,12 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "ace36b5d-b041-4d3e-8222-5945eeccfd5e"
+      }
+    },
+    "owner": "bosk-atelier"
   }
 }
